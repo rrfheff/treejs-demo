@@ -1,10 +1,14 @@
 'use client'
 
 import { Canvas, useFrame, useLoader } from "@react-three/fiber"
-import { OrbitControls, Text, Box, Environment } from "@react-three/drei"
-import { Suspense, useRef } from "react"
+import { OrbitControls, Text, Box, Environment, useGLTF } from "@react-three/drei"
+import { Suspense, useRef, useEffect } from "react"
 import { TextureLoader } from 'three/src/loaders/TextureLoader'
 import placeHolder from './placeholder.svg'
+import lanternModel from './Lantern.glb'
+import testModel from './2.glb'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import * as THREE from 'three'
 
 function Picture({ position, rotation, url }) {
   const texture = useLoader(TextureLoader, url)
@@ -67,12 +71,36 @@ function Palace() {
   )
 }
 
+function Model() {
+  const group = useRef();
+  const { nodes } = useGLTF(testModel);
+  
+  // Calculate the bounding box and center
+  const boundingBox = new THREE.Box3().setFromObject(nodes.Scene || nodes[Object.keys(nodes)[0]]); // Assuming nodes is not empty
+  const center = new THREE.Vector3();
+  boundingBox.getCenter(center);
+
+  useEffect(() => {
+    if (group.current) {
+      // Adjust the position and zoom level as necessary
+      group.current.position.set(-center.x, -center.y, -center.z);
+    }
+  }, [center]);
+
+  return (
+    <group ref={group} dispose={null}>
+      <primitive object={nodes.Scene || nodes[Object.keys(nodes)[0]]} />
+    </group>
+  );
+}
+
 export default function Component() {
   return (
     <div className="w-full h-screen">
-      <Canvas camera={{ position: [0, 2, 5] }}>
+      <Canvas camera={{ position: [30, 60, 40] }}>
         <Suspense fallback={null}>
-          <Palace />
+          <Model />
+          {/* <Palace /> */}
           <OrbitControls enableZoom={true} enablePan={true} enableRotate={true} />
           <Environment preset="apartment" />
         </Suspense>
